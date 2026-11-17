@@ -1,0 +1,325 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AKKI AI</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:#080d1b;
+  color:white;
+  font-family:Arial,sans-serif;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+header{
+  text-align:center;
+  padding:18px;
+  background:#111b31;
+  border-bottom:1px solid #263650;
+}
+
+h2{
+  color:#38bdf8;
+  margin:0;
+}
+
+header p{
+  color:#b9c8dc;
+  margin:6px 0 0;
+  font-size:13px;
+}
+
+#chat{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  padding:15px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.message{
+  max-width:88%;
+  padding:12px;
+  border-radius:14px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+
+.bot{
+  background:#1c2a45;
+  align-self:flex-start;
+}
+
+.user{
+  background:#075985;
+  align-self:flex-end;
+}
+
+.controls{
+  padding:12px;
+  background:#111b31;
+  border-top:1px solid #263650;
+}
+
+select,input,button{
+  border:0;
+  border-radius:10px;
+  padding:13px;
+  font-size:15px;
+}
+
+select{
+  width:100%;
+  margin-bottom:10px;
+  background:#263650;
+  color:white;
+}
+
+.input-row,.button-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:9px;
+}
+
+input{
+  flex:1;
+  min-width:0;
+  background:white;
+  color:#111;
+}
+
+button{
+  background:#0284c7;
+  color:white;
+  cursor:pointer;
+}
+
+.button-row button{
+  flex:1;
+}
+
+#clearButton{
+  width:100%;
+  background:#34415c;
+}
+
+#status{
+  text-align:center;
+  color:#b9c8dc;
+  font-size:12px;
+  min-height:18px;
+  margin-top:8px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>🤖 AKKI AI</h2>
+  <p>Your Personal AI Assistant</p>
+</header>
+
+<main id="chat">
+  <div class="message bot">
+    नमस्ते! मैं AKKI AI हूँ। लिखकर या बोलकर बात करो।
+  </div>
+</main>
+
+<div class="controls">
+
+  <select id="language">
+    <option value="hi-IN">हिंदी</option>
+    <option value="en-US">English</option>
+  </select>
+
+  <div class="input-row">
+    <input id="userInput"
+      type="text"
+      placeholder="अपना सवाल लिखो...">
+    <button id="sendButton">Send</button>
+  </div>
+
+  <div class="button-row">
+    <button id="micButton">🎤 बोलकर पूछो</button>
+    <button id="voiceButton">🔊 आवाज़ चालू</button>
+  </div>
+
+  <button id="clearButton">Clear Chat</button>
+
+  <div id="status">AKKI AI तैयार है</div>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("userInput");
+const language = document.getElementById("language");
+const statusText = document.getElementById("status");
+
+let voiceEnabled = true;
+
+function addMessage(text, sender){
+  const message = document.createElement("div");
+  message.className = "message " + sender;
+  message.textContent = text;
+  chat.appendChild(message);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function speak(text){
+  if(!voiceEnabled || !("speechSynthesis" in window)){
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const speech = new SpeechSynthesisUtterance(text);
+  speech.lang = language.value;
+  speech.rate = 1;
+
+  window.speechSynthesis.speak(speech);
+}
+
+function getReply(text){
+  const question = text.toLowerCase();
+
+  if(
+    question.includes("नमस्ते") ||
+    question.includes("हेलो") ||
+    question.includes("hello") ||
+    question.includes("hi")
+  ){
+    return language.value === "hi-IN"
+      ? "नमस्ते! मैं AKKI AI हूँ। बताओ, मैं तुम्हारी क्या मदद करूँ?"
+      : "Hello! I am AKKI AI. How can I help you?";
+  }
+
+  if(
+    question.includes("नाम") ||
+    question.includes("name")
+  ){
+    return language.value === "hi-IN"
+      ? "मेरा नाम AKKI AI है।"
+      : "My name is AKKI AI.";
+  }
+
+  if(
+    question.includes("कैसे हो") ||
+    question.includes("how are you")
+  ){
+    return language.value === "hi-IN"
+      ? "मैं ठीक हूँ! तुम बताओ, कैसे हो?"
+      : "I am fine! How are you?";
+  }
+
+  return language.value === "hi-IN"
+    ? "तुम्हारा सवाल मिल गया! अभी मेरा असली AI सर्वर जुड़ा नहीं है।"
+    : "I received your question! My real AI server is not connected yet.";
+}
+
+function sendMessage(){
+  const text = input.value.trim();
+
+  if(!text){
+    statusText.textContent = "पहले अपना सवाल लिखो।";
+    return;
+  }
+
+  addMessage(text, "user");
+  input.value = "";
+
+  const reply = getReply(text);
+
+  addMessage(reply, "bot");
+  speak(reply);
+
+  statusText.textContent = "डेमो जवाब भेज दिया गया।";
+}
+
+document.getElementById("sendButton")
+  .addEventListener("click", sendMessage);
+
+input.addEventListener("keydown", function(event){
+  if(event.key === "Enter"){
+    sendMessage();
+  }
+});
+
+document.getElementById("voiceButton")
+  .addEventListener("click", function(){
+    voiceEnabled = !voiceEnabled;
+
+    this.textContent = voiceEnabled
+      ? "🔊 आवाज़ चालू"
+      : "🔇 आवाज़ बंद";
+
+    if(!voiceEnabled && "speechSynthesis" in window){
+      window.speechSynthesis.cancel();
+    }
+  });
+
+document.getElementById("clearButton")
+  .addEventListener("click", function(){
+    chat.innerHTML = "";
+    addMessage("चैट साफ हो गई। फिर से बात शुरू करो!", "bot");
+    statusText.textContent = "नई चैट शुरू हुई।";
+  });
+
+document.getElementById("micButton")
+  .addEventListener("click", function(){
+
+    const Recognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if(!Recognition){
+      statusText.textContent =
+        "इस ब्राउज़र में Voice Input उपलब्ध नहीं है।";
+      return;
+    }
+
+    const recognition = new Recognition();
+
+    recognition.lang = language.value;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = function(){
+      statusText.textContent = "🎤 सुन रहा हूँ...";
+    };
+
+    recognition.onresult = function(event){
+      input.value = event.results[0][0].transcript;
+      sendMessage();
+    };
+
+    recognition.onerror = function(event){
+      statusText.textContent = "Voice Error: " + event.error;
+    };
+
+    recognition.onend = function(){
+      if(statusText.textContent === "🎤 सुन रहा हूँ..."){
+        statusText.textContent = "सुनना बंद हुआ।";
+      }
+    };
+
+    try{
+      recognition.start();
+    }catch(error){
+      statusText.textContent = "माइक्रोफोन शुरू नहीं हो पाया।";
+    }
+  });
+</script>
+
+</body>
+</html>
